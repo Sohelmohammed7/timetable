@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Study Command Center</title>
+<meta name="description" content="Offline study timetable, focus timer and progress tracker. Data stays in your browser.">
+<meta name="theme-color" content="#0B1020">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Cpath d='M9 17l5 5 9-11' stroke='white' stroke-width='3' fill='none'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0B1020;--bg2:#111827;--card:#151D32;--card2:#1E293B;--tx:#F8FAFC;--tx2:#CBD5E1;--tx3:#94A3B8;--line:rgba(148,163,184,.16);--pri:#6366F1;--pri2:#4F46E5;--foc:#8B5CF6;--cy:#22D3EE;--grad:linear-gradient(135deg,#4F46E5 0%,#8B5CF6 55%,#06B6D4 100%);--ok:#10B981;--ok2:#34D399;--amb:#FBBF24;--org:#F97316;--red:#EF4444;--sky:#38BDF8;--sh:0 8px 28px rgba(0,0,0,.35)}
+[data-theme=light]{--bg:#eef2ff;--bg2:#f5f3ff;--card:#fff;--card2:#f1f5ff;--tx:#0f172a;--tx2:#334155;--tx3:#64748b;--line:rgba(15,23,42,.1);--pri:#4F46E5;--pri2:#4338CA;--foc:#7C3AED;--cy:#0891B2;--ok:#059669;--ok2:#10B981;--amb:#D97706;--org:#EA580C;--red:#DC2626;--sky:#0284C7;--sh:0 8px 24px rgba(79,70,229,.1)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 500px at 8% -8%,color-mix(in srgb,var(--pri) 26%,transparent),transparent),radial-gradient(800px 500px at 100% 100%,color-mix(in srgb,var(--cy) 14%,transparent),transparent),var(--bg);background-attachment:fixed;color:var(--tx);font:15px/1.5 "Inter","Segoe UI",system-ui,-apple-system,sans-serif;min-height:100vh}
+.wrap{max-width:1240px;margin:0 auto;padding:18px}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+h2{font-size:13px;color:var(--tx3);text-transform:none;font-weight:600;margin-bottom:12px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.brand{font-weight:700;letter-spacing:.01em}.brand small{display:block;font-weight:500;color:var(--tx3);font-size:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:13px;color:var(--tx2)}
+.chip b{color:var(--tx)}
+button,select,input,textarea{font:inherit;color:var(--tx)}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card2);border-radius:10px;padding:8px 14px;transition:transform .15s,background .2s,border-color .2s}
+button:hover{border-color:var(--pri)}button:active{transform:scale(.97)}
+button.pri{background:var(--grad);border:0;color:#fff;font-weight:600;padding:11px 22px;box-shadow:0 6px 18px color-mix(in srgb,var(--pri) 40%,transparent)}
+button.ghost{background:transparent}button.danger{color:var(--org)}
+:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 24%,var(--card)),var(--card));border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:var(--sh);margin-bottom:18px}
+.hero h1{font-size:30px}.hero .dt{color:var(--tx2);margin-top:4px}
+#quote{margin-top:16px;color:var(--tx3);font-style:italic;cursor:pointer;transition:opacity .4s;max-width:46ch}
+.rings{display:flex;gap:14px;justify-content:space-around;align-items:center;flex-wrap:wrap}
+.rg{position:relative;width:104px;text-align:center}
+.rg svg{width:104px;height:104px;transform:rotate(-90deg)}
+.rg circle{fill:none;stroke-width:8;stroke-linecap:round}
+.rg .bg{stroke:var(--line)}.rg .fg{stroke-dasharray:264;stroke-dashoffset:264;transition:stroke-dashoffset 1s cubic-bezier(.3,.8,.3,1)}
+.rg b{position:absolute;top:34px;left:0;right:0;font-size:22px}
+.rg span{display:block;color:var(--tx3);font-size:12px;margin-top:-4px}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;background:var(--ok);transition:width .8s}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
+.col{display:grid;gap:18px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px;box-shadow:var(--sh)}
+.act{padding:24px;border-radius:22px;position:relative;overflow:hidden}
+.act.live{border-color:color-mix(in srgb,var(--amb) 60%,transparent);animation:glow 3s ease-in-out infinite}
+.act.brk{background:linear-gradient(135deg,color-mix(in srgb,var(--sky) 14%,var(--card)),var(--card))}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--amb) 0%,transparent),var(--sh)}50%{box-shadow:0 0 28px 2px color-mix(in srgb,var(--amb) 35%,transparent),var(--sh)}}
+.lab{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--amb)}.brk .lab{color:var(--sky)}
+.act .tm{font-size:15px;color:var(--tx2);margin-top:8px}.act h3{font-size:26px;margin:2px 0}
+.act .tp{color:var(--tx2)}.act .cd{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;margin:10px 0}
+.note{margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--card2);color:var(--tx2);font-size:14px}
+.tips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.tips span{background:var(--card2);padding:5px 12px;border-radius:999px;font-size:13px;color:var(--tx2)}
+.sec{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:16px 0 6px;color:var(--tx3);font-size:13px;font-weight:600}
+.sec:first-child{margin-top:0}.sec i{font-style:normal;font-weight:500}
+.tr{display:grid;grid-template-columns:30px 100px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;border:1px solid transparent;margin-bottom:4px;transition:background .3s,border-color .3s}
+.tr.up{opacity:.62}.tr.cur{background:color-mix(in srgb,var(--amb) 12%,transparent);border-color:color-mix(in srgb,var(--amb) 55%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--amb) 22%,transparent)}
+.tr.done{background:color-mix(in srgb,var(--ok) 9%,transparent)}.tr.done b{color:var(--ok2)}
+.tr.bk{padding:5px 12px;font-size:13px;color:var(--tx3)}.tr.bk .dot{width:8px;height:8px;border-radius:50%;background:var(--line);margin:0 11px}
+.tr .t{font-variant-numeric:tabular-nums;color:var(--tx2);font-size:14px}.tr b{font-weight:600}
+.tr span.d{display:block;font-size:13px;color:var(--tx3)}
+.tg{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--card2);color:var(--tx3)}
+.tg.m{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent)}.tg.n{color:var(--amb);background:color-mix(in srgb,var(--amb) 14%,transparent)}.tg.d{color:var(--ok2);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.ck{width:26px;height:26px;padding:0;border-radius:50%;border:2px solid var(--tx3);background:transparent;display:grid;place-items:center}
+.ck svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;opacity:0;transform:scale(.3);transition:all .25s}
+.ck[aria-pressed=true]{background:var(--ok);border-color:var(--ok)}.ck[aria-pressed=true] svg{opacity:1;transform:scale(1)}
+.ck.pop{animation:pop .45s}@keyframes pop{40%{transform:scale(1.35)}}
+.ck:disabled{cursor:not-allowed;opacity:.5}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1;min-width:70px;padding:8px 6px;font-size:13px}
+.seg button.on{color:#fff;border-color:transparent}
+.e0.on{background:var(--amb);color:#1b1300!important}.e1.on{background:var(--ok)}.e2.on{background:var(--sky);color:#04202e!important}.e3.on{background:var(--foc)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;font-size:14px}
+.row .bar{flex:1;max-width:46%}.mut{color:var(--tx3);font-size:13px}
+.big{font-size:40px;font-weight:700;line-height:1.1}
+.tgt div{padding:4px 0;color:var(--tx2);font-size:14px}.tgt .y{color:var(--ok2)}
+.rv{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--card2);margin-bottom:6px;font-size:14px}
+.rv.r{border-left:3px solid var(--red)}.rv.o{border-left:3px solid var(--org)}.rv.g{border-left:3px solid var(--ok)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.cal h4{margin:0;text-align:center;font-size:11px;color:var(--tx3);font-weight:500}
+.cal button{aspect-ratio:1;padding:0;font-size:12px;position:relative;background:var(--card2)}
+.cal button::after{content:"";position:absolute;bottom:5px;left:50%;width:7px;height:7px;margin-left:-3px;border-radius:50%;background:var(--line)}
+.cal .x::after{background:var(--ok)}.cal .g::after{background:var(--sky)}.cal .p::after{background:var(--amb)}.cal .l::after{background:var(--red)}
+.cal .today{border-color:var(--pri)}
+form{display:grid;gap:8px}
+input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+textarea{resize:vertical;min-height:56px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tp2{font-size:12px;font-weight:600}
+.mw{display:flex;gap:10px;align-items:center;margin:5px 0;font-size:14px}.mw>span{width:42%}.mw .bar{flex:1}.mw em{font-style:normal;width:40px;text-align:right;color:var(--tx3)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,30px);background:var(--ok);color:#fff;padding:10px 20px;border-radius:99px;opacity:0;transition:all .4s;z-index:30;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#fm{position:fixed;inset:0;z-index:20;background:linear-gradient(160deg,#070b1a,#1b1550 60%,#2b1a6b);color:#F8FAFC;display:grid;place-items:center;text-align:center;padding:24px}
+#fm[hidden]{display:none}
+#fm .in{max-width:520px;width:100%;position:relative}
+#fm .orb{position:absolute;left:50%;top:150px;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:50%;background:radial-gradient(circle,rgba(139,92,246,.45),transparent 68%);animation:br 6s ease-in-out infinite;z-index:-1}
+@keyframes br{50%{transform:scale(1.25);opacity:.7}}
+#fm .k{letter-spacing:.2em;font-size:12px;color:#a5b4fc}#fm h2{font-size:28px;margin:8px 0 2px;color:#fff}
+#fm .clk{font-size:84px;font-weight:700;font-variant-numeric:tabular-nums;margin:60px 0 40px}
+#fm p{color:#cbd5e1}#fm button{margin:6px;font-size:16px;padding:12px 26px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff}
+#fm button.pri{background:linear-gradient(135deg,#6366F1,#8B5CF6)}
+#fm .fbs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:minmax(0,1fr)}.hero h1{font-size:25px}.tr{grid-template-columns:30px 1fr auto}.tr .t{grid-column:2;grid-row:1}.tr .bd{grid-column:2}.tr .tg{grid-row:1;grid-column:3}.tr .ck{grid-row:1/3}#fm .clk{font-size:64px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.lab{color:var(--cy)}
+.grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.hero{grid-template-columns:1.1fr 1.5fr auto;align-items:center;padding:20px 24px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 28%,var(--card)),color-mix(in srgb,var(--cy) 10%,var(--card)))}
+.hero h1{font-size:24px}
+.hp .pt{font-size:12px;color:var(--tx3);font-weight:600}
+.hp .pn{font-size:16px;margin:2px 0 8px;color:var(--tx2)}.hp .pn b{color:var(--tx);font-size:20px}
+.bar.lg{height:12px}.bar.lg i{background:var(--grad)}
+.mom{margin-top:8px;display:flex;gap:6px 16px;flex-wrap:wrap;font-size:13px;color:var(--tx2)}.mom .mut,#dis{color:var(--tx3)}
+.rg{width:82px}.rg svg{width:82px;height:82px}.rg b{top:26px;font-size:17px}
+.main .tlc{padding:16px}
+#tl{position:relative;max-height:max(340px,calc(100vh - 470px));overflow:auto;padding-right:4px}
+.act.live{background:var(--grad);color:#fff;border:0;animation:glow2 3.2s ease-in-out infinite}
+@keyframes glow2{0%,100%{box-shadow:0 10px 30px rgba(99,102,241,.35)}50%{box-shadow:0 14px 46px rgba(6,182,212,.5)}}
+.act.live .lab,.act.live .tm,.act.live .tp,.act.live .mut{color:rgba(255,255,255,.88)}
+.act.live h3{font-size:30px}.act.live .cd{font-size:56px}
+.act.live button.pri{background:#fff;color:#3b2fb5;box-shadow:none}
+.act.live .gh{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3);color:#fff;margin-left:8px}
+.act.live .note{background:rgba(255,255,255,.16);color:#fff}
+.act.live .tg.d{background:rgba(255,255,255,.2);color:#fff}
+.tr{position:relative}
+.tr.cur{background:color-mix(in srgb,var(--cy) 12%,transparent);border-color:color-mix(in srgb,var(--cy) 60%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--cy) 22%,transparent)}
+.tg.n{color:var(--cy);background:color-mix(in srgb,var(--cy) 16%,transparent)}
+.fx{position:absolute;right:14px;top:4px;font-size:12px;font-weight:700;color:var(--ok2);animation:fx 1.4s forwards;pointer-events:none}
+@keyframes fx{to{transform:translateY(-22px);opacity:0}}
+.bump{display:inline-block;animation:bump .6s}@keyframes bump{40%{transform:scale(1.5);color:var(--cy)}}
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:14px}
+.tabs button{flex:1;border:0;background:transparent;padding:8px 4px;font-size:13px;color:var(--tx3)}
+.tabs button.on{background:var(--grad);color:#fff;font-weight:600}
+.pane{display:none;gap:16px}.pane.on{display:grid}
+.cs{border-top:3px solid var(--pri)}.cf{border-top:3px solid var(--foc)}.cn{border-top:3px solid var(--cy)}
+.cw{border-top:3px solid var(--cy);background:color-mix(in srgb,var(--cy) 7%,var(--card))}
+.cal button::after{display:none}.cal .today{outline:2px solid var(--cy)}
+.chain{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 10px}
+.chain i{width:22px;height:22px;border-radius:6px;background:var(--card2);border:1px solid var(--line)}
+.chain i.on{background:var(--grad);border:0}.chain i.t{border:2px dashed var(--cy)}
+.nx h3{font-size:19px;margin:2px 0}
+@media(min-width:901px){.side{position:sticky;top:12px}.panes{max-height:calc(100vh - 110px);overflow:auto;padding:2px 6px 2px 2px}}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.grid{grid-template-columns:minmax(0,1fr)}#tl{max-height:60vh}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top">
+  <div class="brand">Personal Study Command Center<small>Focus. Protect your energy. Improve every week.</small></div>
+  <div class="chips"><span class="chip">Streak <b id="strk"></b></span><span class="chip">XP <b id="xp"></b></span><button id="theme" class="ghost" data-a="theme">Light / Dark</button></div>
+</div>
+<section class="hero">
+  <div class="hl"><h1 id="greet"></h1><div class="dt" id="dt"></div><div id="quote" data-a="quote"></div></div>
+  <div class="hp">
+    <div class="pt">Today's progress</div>
+    <div class="pn"><b id="sess"></b> sessions · <b id="pctT"></b> complete · <b id="fmin"></b> focused</div>
+    <div class="bar lg"><i id="pbar"></i></div>
+    <div class="mom"><span id="mom"></span><span id="dis"></span></div>
+  </div>
+  <div class="rings">
+    <div class="rg"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="42"/><circle id="r1" class="fg" cx="50" cy="50" r="42" stroke="var(--pri)"/></svg><b id="v1"></b><span>Study</span></div>
+    <div class="rg"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="42"/><circle id="r2" class="fg" cx="50" cy="50" r="42" stroke="var(--foc)"/></svg><b id="v2"></b><span>Focus</span></div>
+    <div class="rg"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="42"/><circle id="r3" class="fg" cx="50" cy="50" r="42" stroke="var(--cy)"/></svg><b id="v3"></b><span>Wellness</span></div>
+  </div>
+</section>
+<div class="grid">
+<div class="col main">
+  <section id="act" class="card act"></section>
+  <section class="card tlc"><h2>Today's timetable</h2><div id="tl"></div></section>
+</div>
+<div class="col side">
+  <div class="tabs" role="tablist"><button class="on" data-a="tab" data-n="today">Today</button><button data-a="tab" data-n="prog">Progress</button><button data-a="tab" data-n="rev">Revise</button><button data-a="tab" data-n="rvw">Review</button></div>
+  <div class="panes">
+  <div class="pane on" id="p-today">
+    <section class="card cn" id="nxt"></section>
+    <section class="card cs"><h2>Recovery</h2><div id="recov"></div></section>
+    <section class="card cw"><h2>How are you today?</h2><div class="mut" style="margin-bottom:6px">Energy</div><div class="seg" id="en"></div><div class="mut" style="margin:10px 0 6px">Mind</div><div class="seg" id="mi"></div><div class="note" id="adv"></div></section>
+    <section class="card cw"><h2>Wellness</h2><div class="seg" id="well"></div><div class="mut" style="margin-top:8px">Optional and gentle. Tick what you managed.</div></section>
+    <section class="card cs tgt"><h2>Today's target</h2><div id="tgt"></div></section>
+  </div>
+  <div class="pane" id="p-prog">
+    <section class="card cn"><h2>Don't break the chain</h2><div id="chain"></div></section>
+    <section class="card cs"><h2>Weekly productivity heatmap</h2><div class="cal" id="cal"></div><div class="note" id="hmnote"></div><div class="note" id="caldet">Select a day to see its numbers.</div></section>
+    <section class="card cs"><h2>Daily performance</h2><div id="perf"></div></section>
+    <section class="card cf"><h2>Focus score</h2><div id="fscore"></div></section>
+    <section class="card cs"><h2>Your growth: last week vs this week</h2><div id="grow"></div></section>
+    <section class="card cn"><h2>Weekly coach</h2><div id="coach"></div></section>
+  </div>
+  <div class="pane" id="p-rev">
+    <section class="card cs"><h2>Priority revision and due today</h2><div id="revs"></div></section>
+    <section class="card cs"><h2>Log question results</h2>
+      <form id="tf"><div class="two"><select id="t1"><option>Maths</option><option>Reasoning</option><option>General Awareness</option></select><input id="t2" list="tl2" placeholder="Topic" required><datalist id="tl2"></datalist></div>
+      <div class="two"><input id="t3" type="number" min="1" placeholder="Attempted" required><input id="t4" type="number" min="0" placeholder="Correct" required></div><button class="pri">Save result</button></form></section>
+    <section class="card cs"><h2>Topic mastery</h2><div id="mast"></div></section>
+    <section class="card cs"><h2>Mistake journal</h2>
+      <form id="mf"><div class="two"><select id="m1"><option>Maths</option><option>Reasoning</option><option>General Awareness</option></select><input id="m2" placeholder="Topic" required></div>
+      <textarea id="m3" placeholder="Question" rows="2"></textarea><input id="m4" placeholder="My mistake"><input id="m5" placeholder="Correct method"><input id="m6" placeholder="What I should remember"><button class="pri">Save mistake</button></form>
+      <div id="mlist" style="margin-top:12px"></div></section>
+  </div>
+  <div class="pane" id="p-rvw">
+    <section class="card cf"><h2>Daily review</h2>
+      <form id="rf"><textarea id="a1" placeholder="What went well?"></textarea><textarea id="a2" placeholder="What distracted you?"></textarea><textarea id="a3" placeholder="What should improve tomorrow?"></textarea></form><div class="note" id="rsum"></div></section>
+    <section class="card"><h2>Settings and backup</h2>
+      <form id="sf" onsubmit="return false"><div class="two"><input id="s1" placeholder="Name"><input id="s2" type="number" min="1" max="17" placeholder="Daily session target"></div>
+      <label class="row"><span>Show motivational messages</span><input id="s3" type="checkbox" style="width:auto"></label>
+      <div class="two"><button type="button" id="exp">Export backup</button><button type="button" id="imp">Import backup</button></div>
+      <div class="two"><button type="button" class="danger" id="rst">Reset today</button><button type="button" class="danger" id="clr">Clear all data</button></div>
+      <input type="file" id="fi" accept=".json" hidden></form></section>
+  </div>
+  </div>
+</div>
+</div>
+</div>
+<div id="fm" hidden></div><div id="toast"></div>
+<script>
+(function(){
+"use strict";
+var $=function(s){return document.querySelector(s)};
+var KEY="studyCommandCenter.v1",DB=null;
+try{DB=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+DB=DB||{};DB.set=Object.assign({name:"Geetha",theme:"dark",target:10,msgs:true},DB.set);
+DB.days=DB.days||{};DB.topics=DB.topics||{};DB.mist=DB.mist||[];DB.rev=DB.rev||0;DB.qi=DB.qi||0;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+var pad=function(n){return(n<10?"0":"")+n};
+var dk=function(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+var pk=function(k){return new Date(k+"T12:00:00")};
+var addK=function(k,n){var d=pk(k);d.setDate(d.getDate()+n);return dk(d)};
+var nowMin=function(){var d=new Date();return d.getHours()*60+d.getMinutes()};
+var TK=function(){return dk(new Date())};
+var DAYS=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var avg=function(a){return a.length?a.reduce(function(x,y){return x+y},0)/a.length:null};
+var rnd=function(x){return x===null?null:Math.round(x)};
+
+/* ---------- schedule (exact original structure) ---------- */
+var raw=[
+["9:00","9:25","m","Maths P1","Learn the concept and write one worked example."],["9:25","9:30","b"],
+["9:30","9:55","m","Maths P2","Work through 4–6 questions. Understand each step."],["9:55","10:00","b"],
+["10:00","10:25","m","Maths P3","Solve 8–10 questions without checking answers."],["10:25","10:30","b"],
+["10:30","10:55","m","Maths P4","Continue the same topic or begin a second one."],["10:55","11:00","b"],
+["11:00","11:25","m","Maths P5","Timed practice: 10–15 questions."],["11:25","11:30","b"],
+["11:30","11:55","m","Maths P6","Check answers and correct mistakes."],
+["11:55","12:00","rec","Record","Score, mistakes, formulas and doubts."],
+["12:00","1:00","l","Lunch and recovery","Full rest."],
+["1:00","1:25","r","Reasoning P1","Understand the rule."],["1:25","1:30","b"],
+["1:30","1:55","r","Reasoning P2","Solve 10–15 questions and explain the logic."],
+["1:55","2:00","rec","Record","Mistakes and the rule to remember."],
+["2:00","2:25","g","Current Affairs P1","Read national and international events: what, where, when."],["2:25","2:30","b"],
+["2:30","2:55","g","Current Affairs P2","Games, sports, events. Write 5–10 Q&A notes."],["2:55","3:00","b"],
+["3:00","3:25","g","Other GA P1","Study today's static GK topic."],["3:25","3:30","b"],
+["3:30","3:55","g","Other GA P2","Continue the topic and make short notes."],["3:55","4:00","b"],
+["4:00","4:25","g","Other GA P3","Close the book. Recall aloud or on paper."],["4:25","4:30","b"],
+["4:30","4:55","g","Other GA P4","Attempt 15–20 MCQs and note mistakes."],
+["4:55","5:00","rec","Record","3 things learned and 1 topic to revise tomorrow."]];
+function toM(t){var p=t.split(":"),h=+p[0];if(h<9)h+=12;return h*60+ +p[1]}
+var S=raw.map(function(r){return{s:toM(r[0]),e:toM(r[1]),r:r[0]+"–"+r[1],t:r[2],n:r[3]||"Break",d:r[4]||""}});
+var isBk=function(s){return s.t==="b"||s.t==="l"};
+var TASKS=[];S.forEach(function(s,i){if(!isBk(s))TASKS.push(i)});
+var SEC=[["Mathematics","9:00 AM – 12:00 PM","m"],["Lunch / recovery","12:00 – 1:00 PM",null],["Reasoning","1:00 – 2:00 PM","r"],["General Awareness","2:00 – 5:00 PM","g"]];
+var SECN=["Maths",null,"Reasoning","General Awareness"];
+var scOf=function(s){return s.s<720?0:s.s<780?1:s.s<840?2:3};
+var T={
+1:{m:["Tables 1–20","Squares and cubes","Prime numbers","Multiplication methods","Number system"],r:["Number series","Alphabet series","Word formation"],g:["History","Freedom struggle","Indian art and culture"]},
+2:{m:["LCM","HCF","Square and cube roots","Simplification"],r:["Coding-decoding","Analogy","Dictionary order"],g:["Geography","Monuments","Places"]},
+3:{m:["Ratio and proportion","Percentages"],r:["Classification","Odd one out","Figure completion","Embedded figures"],g:["Polity","Constitution and amendments","Governance"]},
+4:{m:["Profit and loss","Discount","Average"],r:["Calendar","Clock","Directions","Blood relations"],g:["General science","Technology","Space programmes"]},
+5:{m:["Simple interest","Compound interest","Partnership","Mixture and alligation"],r:["Arrangement","Ranking","Meaningful reasoning"],g:["Indian economy","Environment","Transport"]},
+6:{m:["Time and work","Speed and distance","Data interpretation"],r:["Mathematical operations","BODMAS","Syllogisms","Venn diagrams"],g:["Literature","Personalities","Flora and fauna","Computer applications"]},
+0:{m:["Weekly revision","Timed maths test","Algebra","Trigonometry","Mensuration","Geometry"],r:["Non-verbal reasoning","Weekly mixed test"],g:["UN and world organisations","Weekly revision","GK quiz"]}};
+function topicFor(s){var t=T[new Date().getDay()];if(s.t==="rec")return"Capture what you learned";
+  if(s.t==="g"&&s.n.indexOf("Current")===0)return"Current affairs: national and international";return t[s.t].slice(0,3).join(" · ")}
+var QUOTES=["Small progress every day becomes a big result.","Understanding beats memorising.","Revise what you know before chasing something new.","Rest is part of the work.","Consistency is quieter than intensity, and stronger.","One focused session is worth more than three distracted hours."];
+var BTIPS=[["Drink water","Stand up","Look far away","Stretch your shoulders"],["Walk for 2 minutes","Roll your neck","Breathe slowly","Look out of a window"],["Stand and stretch","Sip water","Relax your eyes","Unclench your jaw"]];
+var FBN=["Excellent","Good","Average","Distracted"],FBV=[1,.85,.65,.5],IV=[1,3,7,14,30];
+
+/* ---------- data ---------- */
+function day(k){k=k||TK();var d=DB.days[k]||(DB.days[k]={});d.done=d.done||{};d.ot=d.ot||{};d.fl=d.fl||{};d.w=d.w||{};d.rv=d.rv||{};d.q=d.q||0;d.c=d.c||0;return d}
+function st(k){
+  var d=DB.days[k]||{},dn=d.done||{},fl=d.fl||{},t=TK(),nm=nowMin();
+  var r={n:TASKS.length,done:0,pn:0,pd:0,ot:0,min:0,fb:[],miss:0,dis:0,fsn:0,sec:[[0,0],[0,0],[0,0],[0,0]]};
+  TASKS.forEach(function(i){var s=S[i],ok=!!dn[i],past=k<t||(k===t&&s.e<=nm);
+    if(ok){r.done++;if((d.ot||{})[i])r.ot++}
+    if(past){r.pn++;if(ok)r.pd++;else r.miss++;var q=r.sec[scOf(s)];q[0]++;if(ok)q[1]++}});
+  Object.keys(fl).forEach(function(i){var f=fl[i];r.fsn++;r.min+=f.sec/60;if(f.fb!=null){r.fb.push(FBV[f.fb]);if(f.fb===3)r.dis++}});
+  r.dis+=d.dist||0;r.min=Math.round(r.min);r.pct=Math.round(100*r.done/r.n);
+  r.well=Math.round(100*Object.keys(d.w||{}).filter(function(x){return d.w[x]}).length/5);
+  if(!r.done&&!r.pn&&!r.fsn)r.fs=null;
+  else r.fs=Math.round(100*(.35*Math.min(1,r.min/120)+.25*(r.fb.length?avg(r.fb):.75)+.2*(r.done?Math.min(1,r.ot/r.done):0)+.2*(r.pn?r.pd/r.pn:1)));
+  r.acc=d.q?Math.round(100*d.c/d.q):null;
+  var c=0;for(var j=0;j<7;j++){var x=DB.days[addK(k,-j)];if(x&&Object.keys(x.done||{}).length>=TASKS.length*.5)c++}
+  r.cons=Math.round(100*c/7);
+  r.score=Math.round(.4*r.pct+.25*(r.fs||0)+.15*r.well+.1*r.cons+.1*(r.acc===null?r.pct:r.acc));
+  return r;
+}
+function wk(off){var d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+7*off);var k0=dk(d),o=[];
+  for(var i=0;i<7;i++){var k=addK(k0,i);var has=k<=TK()&&(k===TK()||!!DB.days[k]);o.push({k:k,i:i,has:has,s:has?st(k):null})}return o}
+function streak(){var n=0,k=TK();for(var i=0;i<400;i++){var d=DB.days[k];if(d&&st(k).pct>=50)n++;else if(!(i===0))break;k=addK(k,-1)}return n}
+function xpTotal(){var x=DB.rev*10;Object.keys(DB.days).forEach(function(k){var d=DB.days[k];x+=Object.keys(d.done||{}).length*10;Object.keys(d.fl||{}).forEach(function(i){var f=d.fl[i];x+=15+(f.fb<=1?10:0)});if(d.q)x+=5});return x}
+function cls(a){return a>=90?["Strong","var(--ok2)"]:a>=80?["Good","var(--ok)"]:a>=70?["Developing","var(--sky)"]:a>=50?["Needs practice","var(--org)"]:["Priority revision","var(--red)"]}
+function tacc(t){return t.att?Math.round(100*t.cor/t.att):0}
+function fmtMin(m){return m>=60?Math.floor(m/60)+"h "+(m%60)+"m":m+"m"}
+function toast(m){var t=$("#toast");t.textContent=m;t.className="on";setTimeout(function(){t.className=""},2200)}
+function bar(p,c){return'<div class="bar"><i style="width:'+p+'%;background:'+(c||"var(--ok)")+'"></i></div>'}
+var CK='<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+
+/* ---------- render ---------- */
+var lastPop=-1,curKey=null,tlInit=false,curTab="today";
+function render(){
+  var now=new Date(),k=TK(),nm=nowMin(),dow=now.getDay(),h=now.getHours(),d=DB.days[k]||{done:{},w:{}},s0=st(k);
+  document.documentElement.setAttribute("data-theme",DB.set.theme);
+  if(k!==curKey){curKey=k;loadForms()}
+  $("#greet").textContent="Good "+(h<12?"morning":h<17?"afternoon":"evening")+", "+DB.set.name;
+  $("#dt").textContent=DAYS[dow]+", "+now.getDate()+" "+MON[now.getMonth()]+" "+now.getFullYear()+" · Current time: "+now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+  $("#quote").style.display=DB.set.msgs?"":"none";
+  $("#quote").textContent="“"+QUOTES[DB.qi%QUOTES.length]+"”";
+  [[s0.pct,1],[s0.fs||0,2],[s0.well,3]].forEach(function(p){$("#r"+p[1]).style.strokeDashoffset=264*(1-p[0]/100);$("#v"+p[1]).textContent=p[0]+"%"});
+  $("#v2").textContent=s0.fs===null?"—":s0.fs+"%";
+  $("#strk").textContent=streak()+" days";$("#xp").textContent=xpTotal();strip(s0);
+  action(nm,d,s0);nextAction(nm,d);recovery(nm,d);chain(s0);timeline(nm,d,dow);checkin(d);targets(d,s0);perf(s0);focusCard(s0);growth();coach();revisions();mastery();wellness(d);calendar();mistakes();review(d,s0);
+}
+function bump(){var x=$("#xp");x.classList.remove("bump");void x.offsetWidth;x.classList.add("bump")}
+function setTab(n){curTab=n;[].forEach.call(document.querySelectorAll(".tabs button"),function(b){b.classList.toggle("on",b.getAttribute("data-n")===n)});[].forEach.call(document.querySelectorAll(".pane"),function(p){p.classList.toggle("on",p.id==="p-"+n)})}
+function distAvg(off){var w=wk(off).filter(function(x){return x.has});return w.length?w.reduce(function(a,x){return a+x.s.dis},0)/w.length:null}
+function distTrend(){var a=distAvg(-1),b=distAvg(0);if(a===null||b===null)return"";var df=Math.round((a-b)*10)/10;return df>0?"↓ "+df+" fewer distractions per day than last week":df<0?"↑ "+Math.abs(df)+" more per day than last week. Try shorter, quieter sessions":"→ same as last week"}
+function strip(s0){
+  $("#sess").textContent=s0.done+" / "+s0.n;$("#pctT").textContent=s0.pct+"%";$("#fmin").textContent=fmtMin(s0.min);$("#pbar").style.width=s0.pct+"%";
+  var n=s0.done,t=distTrend();
+  $("#mom").innerHTML=n?"🔥 <b>"+n+"</b> completed → <span class=\"mut\">🔥 "+(n+1)+" → 🔥 "+(n+2)+"</span>":"Complete one session to light the first flame.";
+  $("#dis").textContent="Distractions today: "+s0.dis+(t?" · "+t:"");
+}
+var PRI={"Maths P3":3,"Maths P5":3,"Reasoning P2":3,"Other GA P4":3,"Maths P6":2,"Maths P2":2,"Other GA P3":2,"Current Affairs P2":2};
+function missedList(nm,d){var o=[];TASKS.forEach(function(i){if(S[i].e<=nm&&!d.done[i])o.push(S[i])});return o.sort(function(a,b){return(PRI[b.n]||1)-(PRI[a.n]||1)||a.s-b.s})}
+function nextAction(nm,d){
+  var ci=-1;S.forEach(function(s,i){if(s.s<=nm&&nm<s.e&&!isBk(s))ci=i});
+  var miss=missedList(nm,d),t=TK(),due=Object.keys(DB.topics).filter(function(n){return DB.topics[n].due<=t}).sort(function(a,b){return tacc(DB.topics[a])-tacc(DB.topics[b])})[0];
+  var nx=null;TASKS.forEach(function(i){if(nx===null&&S[i].s>nm)nx=i});var h,sub;
+  if(ci>=0&&!d.done[ci]){h="Do this now: "+S[ci].n;sub=topicFor(S[ci])+". "+(d.en===3?"Aim to finish, not to be fast.":d.en===0?"Good energy: push for accuracy and speed.":"One focused session, nothing else.")}
+  else if(miss.length&&(PRI[miss[0].n]||1)>=3){h="Recover: "+miss[0].n;sub="The most valuable session you missed. Do it in the next free slot, then carry on."}
+  else if(due){h="Revise "+due;sub=tacc(DB.topics[due])+"% accuracy. 15 minutes of untimed questions."}
+  else if(nx!==null){h="Up next: "+S[nx].n;sub=S[nx].r+" · "+topicFor(S[nx])}
+  else{h="Write your daily review";sub="Then rest. Tomorrow starts fresh."}
+  $("#nxt").innerHTML='<div class="nx"><div class="mut">Next action</div><h3>'+h+'</h3><p class="mut" style="margin:0">'+sub+"</p></div>";
+}
+function recovery(nm,d){
+  var miss=missedList(nm,d),yk=addK(TK(),-1),h="";
+  if(DB.days[yk]&&st(yk).pct<50)h+='<p style="margin:0 0 8px">Yesterday was incomplete. That\'s okay. Today, continue from the highest-priority task.</p>';
+  if(!miss.length)h+='<p class="mut" style="margin:0">You\'re on track. Nothing to recover.</p>';
+  else h+='<p style="margin:0 0 8px">Missing a session is normal. Here is what matters most:</p>'+miss.slice(0,3).map(function(s,i){return'<div class="rv"><span><b>'+(i+1)+". "+s.n+'</b> <span class="mut">'+s.r+"</span></span></div>"}).join("")+'<p class="mut" style="margin:6px 0 0">Skip the rest. A short mistake review beats rushing through everything.</p>';
+  $("#recov").innerHTML=h;
+}
+function chain(s0){
+  var h="",k,on;for(var j=13;j>=0;j--){k=addK(TK(),-j);on=!!DB.days[k]&&st(k).pct>=50;h+='<i class="'+(on?"on":"")+(j===0&&!on?" t":"")+'" title="'+k+'"></i>'}
+  var need=Math.max(0,Math.ceil(TASKS.length*.5)-s0.done);
+  $("#chain").innerHTML='<div class="chain">'+h+'</div><p style="margin:0"><b>'+streak()+"-day chain.</b> "+(s0.pct>=50?"Today is secured.":need+" more "+(need===1?"session":"sessions")+" today keeps it going.")+'</p><p class="mut" style="margin:4px 0 0">A day counts at 50%. Missing a day isn\'t failure: the chain restarts and your history stays.</p>';
+}
+function action(nm,d,s0){
+  var ci=-1;S.forEach(function(s,i){if(s.s<=nm&&nm<s.e)ci=i});var el=$("#act"),h="";
+  var prevMiss=null;
+  if(ci>=0){
+    var s=S[ci];
+    if(isBk(s)){
+      var tips=s.t==="l"?["Eat properly","Walk a little","Rest your eyes","Avoid studying"]:BTIPS[Math.floor(nm/5)%3];
+      h='<div class="lab">'+(s.t==="l"?"RECOVERY TIME":"5-MINUTE RESET")+'</div><h3>'+(s.t==="l"?"Rest properly, then come back fresh.":"Step away from the screen.")+'</h3><div class="cd" id="cd"></div><div class="tips">'+tips.map(function(x){return"<span>"+x+"</span>"}).join("")+'</div><div class="note">Rest is part of productivity. Skip the phone scrolling.</div>';
+      el.className="card act brk";
+    }else{
+      var ok=!!d.done[ci];
+      h='<div class="lab">● LIVE SESSION</div><div class="tm">'+s.r+'</div><h3>'+s.n+'</h3><div class="tp">Today\'s focus: '+topicFor(s)+'</div><p class="mut">'+s.d+'</p><div class="cd" id="cd"></div>'+(ok?'<div class="tg d">Done</div>':'<button class="pri" data-a="focus" data-i="'+ci+'">Start focus</button><button class="gh" data-a="dist">I got distracted</button>');
+      el.className="card act live";
+    }
+    // gentle behind-schedule coaching
+    for(var j=ci-1;j>=0;j--){if(!isBk(S[j])){prevMiss=(!d.done[j]&&S[j].t!=="rec")?j:null;break}}
+    var missed=0;TASKS.forEach(function(i){if(S[i].e<=nm&&!d.done[i])missed++});
+    if(!isBk(s)&&prevMiss!==null)h+='<div class="note">You\'re '+(nm-S[prevMiss].e)+' minutes behind. Don\'t panic. Continue with the current session and skip unnecessary catch-up pressure.</div>';
+    else if(missed>2)h+='<div class="note">Some earlier sessions are open. That\'s okay. Continue from the highest-priority task: the one in front of you.</div>';
+  }else{
+    var nx=null;TASKS.forEach(function(i){if(nx===null&&S[i].s>nm)nx=i});
+    el.className="card act";
+    if(nx!==null)h='<div class="lab">UP NEXT</div><div class="tm">'+S[nx].r+'</div><h3>'+S[nx].n+'</h3><div class="tp">'+topicFor(S[nx])+'</div><p class="mut">'+S[nx].d+' Starts in '+(S[nx].s-nm)+' min.</p>';
+    else h='<div class="lab" style="color:var(--ok2)">DAY COMPLETE</div><h3>That\'s the study block done.</h3><p class="mut">Fill in the daily review below, then rest. Tomorrow starts fresh.</p>';
+  }
+  el.innerHTML=h;tickCd();
+}
+function tickCd(){
+  var el=$("#cd");if(!el)return;var n=new Date(),sec=n.getHours()*3600+n.getMinutes()*60+n.getSeconds(),nm=nowMin();
+  S.forEach(function(s){if(s.s<=nm&&nm<s.e){var r=s.e*60-sec;el.textContent=pad(Math.floor(r/60))+":"+pad(r%60)}});
+}
+function timeline(nm,d,dow){
+  var tp=T[dow],h="",last=-1;
+  S.forEach(function(s,i){
+    var sc=scOf(s);
+    if(sc!==last){last=sc;var key=SEC[sc][2];h+='<div class="sec"><span>'+SEC[sc][0]+'</span><i>'+SEC[sc][1]+(key?" · "+tp[key].slice(0,3).join(", "):"")+"</i></div>"}
+    var cur=s.s<=nm&&nm<s.e,up=s.s>nm;
+    if(isBk(s)){h+='<div class="tr bk'+(cur?" cur":"")+'"><span class="dot"></span><span class="t">'+s.r+'</span><span>'+(s.t==="l"?"Lunch and recovery":"Break")+'</span><span></span></div>';return}
+    var ok=!!d.done[i],tag=ok?["Done","d"]:cur?["Now","n"]:up?["Upcoming",""]:["Missed","m"];
+    h+='<div class="tr'+(ok?" done":"")+(cur?" cur":"")+(up?" up":"")+'"><button class="ck'+(lastPop===i?" pop":"")+'" data-a="task" data-i="'+i+'" aria-pressed="'+ok+'" aria-label="'+s.n+" "+s.r+'"'+(up?" disabled":"")+'>'+CK+'</button><span class="t">'+s.r+'</span><div class="bd"><b>'+s.n+'</b><span class="d">'+s.d+'</span></div><span class="tg '+tag[1]+'">'+tag[0]+"</span>"+(lastPop===i&&ok?'<span class="fx">+10 XP</span>':"")+"</div>";
+  });
+  var sc=$("#tl"),pt=sc.scrollTop;sc.innerHTML=h;lastPop=-1;
+var cr=sc.querySelector(".tr.cur");
+if(!tlInit&&cr){sc.scrollTop=Math.max(0,cr.offsetTop-sc.clientHeight/2+cr.offsetHeight/2);tlInit=true}else sc.scrollTop=pt;
+}
+function checkin(d){
+  var E=["High","Good","Average","Low"],M=["Focused","Normal","Distracted","Stressed"];
+  $("#en").innerHTML=E.map(function(x,i){return'<button class="e'+i+(d.en===i?" on":"")+'" data-a="en" data-i="'+i+'">'+x+"</button>"}).join("");
+  $("#mi").innerHTML=M.map(function(x,i){return'<button class="e'+i+(d.mi===i?" on":"")+'" data-a="mi" data-i="'+i+'">'+x+"</button>"}).join("");
+  var EA=["Good time for a difficult topic or timed practice.","Steady day. Follow the plan and protect your breaks.","Keep sessions simple. Start by revising what you already know.","Keep the session simple. Focus on completion rather than speed."];
+  var MA=["","","Try one 25-minute session with your phone out of reach.","Take three slow breaths, then do one small task at a time."];
+  $("#adv").textContent=d.en==null&&d.mi==null?"Check in to get a tailored suggestion. This is a self-awareness tool, not medical advice.":(d.en!=null?EA[d.en]:"")+" "+(d.mi!=null?MA[d.mi]:"");
+}
+function targets(d,s0){
+  var mm=!!(d.done[8]&&d.done[4]),rs=!!d.done[S.findIndex(function(s){return s.n==="Reasoning P2"})],mc=!!d.done[S.findIndex(function(s){return s.n==="Other GA P4"})],rv=!!d.done[11];
+  var w=Object.keys(d.w||{}).filter(function(x){return d.w[x]}).length;
+  var L=[[s0.done>=DB.set.target,"Complete "+DB.set.target+" study sessions ("+s0.done+")"],[s0.min>=120,"2+ hours focused ("+fmtMin(s0.min)+")"],[mm,"Maths practice (P3 and P5)"],[rs,"Reasoning practice"],[mc,"GA MCQs"],[rv,"Review mistakes (Maths record)"],[w>=3,"Look after yourself (3+ wellness ticks)"]];
+  $("#tgt").innerHTML=L.map(function(x){return'<div class="'+(x[0]?"y":"")+'">'+(x[0]?"✓ ":"○ ")+x[1]+"</div>"}).join("")+'<p class="mut" style="margin:8px 0 0">'+(L.filter(function(x){return x[0]}).length>=4?"Strong day. Anything more is a bonus.":"Aim for progress, not perfection. Each tick counts.")+"</p>";
+}
+function perf(s){
+  var R=[["Study",s.pct,"var(--ok)"],["Focus",s.fs||0,"var(--foc)"],["Consistency",s.cons,"var(--pri)"],["Wellness",s.well,"var(--sky)"]];
+  $("#perf").innerHTML='<div class="big">'+s.score+' <span class="mut" style="font-size:16px">/ 100</span></div>'+R.map(function(r){return'<div class="row"><span>'+r[0]+'</span>'+bar(r[1],r[2])+'<span class="mut">'+r[1]+"%</span></div>"}).join("")+'<p class="mut" style="margin:8px 0 0">Accuracy: '+(s.acc===null?"not logged":s.acc+"%")+". Score = 40% study, 25% focus, 15% wellness, 10% consistency, 10% accuracy. Hours alone never count.</p>";
+}
+function focusCard(s){
+  var lw=avg(wk(-1).filter(function(x){return x.has&&x.s.fs!==null}).map(function(x){return x.s.fs})),tw=avg(wk(0).filter(function(x){return x.has&&x.s.fs!==null}).map(function(x){return x.s.fs}));
+  $("#fscore").innerHTML='<div class="big">'+(s.fs===null?"—":s.fs)+' <span class="mut" style="font-size:16px">/ 100</span></div><div class="row"><span>Focused today</span><b>'+fmtMin(s.min)+'</b></div><div class="row"><span>Deep sessions</span><b>'+s.fsn+'</b></div><div class="row"><span>Distractions</span><b>'+s.dis+'</b></div><p class="mut" style="margin:6px 0 0">'+(lw!==null&&tw!==null?(tw>=lw?"↑ ":"↓ ")+Math.abs(Math.round(tw-lw))+"% vs last week. ":"")+(distTrend()?distTrend()+". ":"")+"Occasional distraction is normal. Look for patterns, not perfection.</p>";
+}
+function growth(){
+  var tw=wk(0).filter(function(x){return x.has}),lw=wk(-1).filter(function(x){return x.has});
+  function agg(w){var q=0,c=0;w.forEach(function(x){var d=DB.days[x.k]||{};q+=d.q||0;c+=d.c||0});
+    return[rnd(avg(w.map(function(x){return x.s.pct}))),rnd(avg(w.filter(function(x){return x.s.fs!==null}).map(function(x){return x.s.fs}))),q?Math.round(100*c/q):null,w.length?Math.round(100*w.filter(function(x){return x.s.pct>=50}).length/7):null,q]}
+  var a=agg(lw),b=agg(tw),N=["Study completion","Focus score","Accuracy","Consistency","Questions solved"];
+  if(a[0]===null&&b[0]===null){$("#grow").innerHTML='<p class="mut">Your comparison appears once you have a few days of data.</p>';return}
+  var diff=a[0]===null||b[0]===null?null:b[0]-a[0];
+  $("#grow").innerHTML=(diff===null?"":'<div class="big" style="color:'+(diff>=0?"var(--ok2)":"var(--org)")+'">'+(diff>=0?"+":"")+diff+"%</div>")+
+    '<div class="row"><span class="mut">Last week '+(a[0]===null?"—":a[0]+"%")+'</span><span class="mut">This week '+(b[0]===null?"—":b[0]+"%")+"</span></div>"+bar(b[0]||0,"var(--pri)")+
+    N.map(function(n,i){var x=a[i],y=b[i],t=x===null||y===null?"":(y-x>=(i===4?1:3)?'<b style="color:var(--ok2)">↑ Improving</b>':y-x<=(i===4?-1:-3)?'<b style="color:var(--org)">↓ Needs attention</b>':'<b style="color:var(--tx3)">→ Stable</b>');
+      return'<div class="row"><span>'+n+'</span><span class="mut">'+(x===null?"—":x+(i===4?"":"%"))+" → "+(y===null?"—":y+(i===4?"":"%"))+"</span><span>"+t+"</span></div>"}).join("");
+}
+function coach(){
+  var tw=wk(0).filter(function(x){return x.has}),lw=wk(-1).filter(function(x){return x.has});
+  if(tw.length<2&&!lw.length){$("#coach").innerHTML='<p class="mut">Complete a couple of days and the coach will analyse your real patterns here.</p>';return}
+  var T_=[0,0,0,0],D_=[0,0,0,0];tw.forEach(function(x){x.s.sec.forEach(function(v,j){T_[j]+=v[0];D_[j]+=v[1]})});
+  var best=-1,worst=-1,bv=-1,wv=101;[0,2,3].forEach(function(j){if(T_[j]){var p=100*D_[j]/T_[j];if(p>bv){bv=p;best=j}if(p<wv){wv=p;worst=j}}});
+  var tf=rnd(avg(tw.filter(function(x){return x.s.fs!==null}).map(function(x){return x.s.fs}))),lf=rnd(avg(lw.filter(function(x){return x.s.fs!==null}).map(function(x){return x.s.fs})));
+  var ins=best>=0&&worst>=0&&bv-wv>=10?"You're completing "+SECN[best]+" consistently, but "+SECN[worst]+" sessions are being skipped more often.":"Your sessions are fairly balanced across subjects this week.";
+  var wt=Object.keys(DB.topics).map(function(n){return[n,tacc(DB.topics[n])]}).sort(function(a,b){return a[1]-b[1]})[0];
+  var nxt=worst>=0&&wv<90?"Protect the "+SEC[worst===3?3:worst===2?2:0][1]+" block ("+SECN[worst]+").":"Keep the same routine and add one revision session.";
+  $("#coach").innerHTML='<div class="mut">This week\'s insight</div><p style="margin:4px 0 10px">'+ins+(tf!==null&&lf!==null?" Your focus score "+(tf>=lf?"improved":"dropped")+" by "+Math.abs(tf-lf)+"%.":"")+'</p><div class="mut">Next week\'s focus</div><p style="margin:4px 0">'+nxt+(wt&&wt[1]<70?" Revisit "+wt[0]+" ("+wt[1]+"% accuracy).":"")+"</p>";
+}
+function revisions(){
+  var t=TK(),names=Object.keys(DB.topics),pri=names.filter(function(n){return tacc(DB.topics[n])<70}).sort(function(a,b){return tacc(DB.topics[a])-tacc(DB.topics[b])});
+  var due=names.filter(function(n){return DB.topics[n].due<=t}).sort(function(a,b){return tacc(DB.topics[a])-tacc(DB.topics[b])});
+  var h="";
+  if(pri.length)h+='<div class="mut" style="margin-bottom:6px">Priority revision</div>'+pri.slice(0,3).map(function(n){var a=tacc(DB.topics[n]);return'<div class="rv '+(a<50?"r":"o")+'"><span><b>'+n+"</b><br><span class=\"mut\">"+a+"% accuracy · "+(a<50?"Revise fundamentals, then solve 10 untimed questions.":"Solve 10 untimed questions and review errors.")+"</span></span></div>"}).join("");
+  h+='<div class="mut" style="margin:10px 0 6px">Revision due</div>'+(due.length?due.map(function(n){var a=tacc(DB.topics[n]);return'<div class="rv '+(a<50?"r":a<70?"o":"g")+'"><span>'+n+'</span><button data-a="rev" data-n="'+n.replace(/"/g,"&quot;")+'">Mark revised</button></div>'}).join(""):'<p class="mut">Nothing due. Log question results to build your revision queue (1, 3, 7, 14, 30 days).</p>');
+  $("#revs").innerHTML=h;
+}
+function mastery(){
+  var g={Maths:[],Reasoning:[],"General Awareness":[]};Object.keys(DB.topics).forEach(function(n){var t=DB.topics[n];(g[t.sub]||(g[t.sub]=[])).push([n,tacc(t)])});
+  var h="";Object.keys(g).forEach(function(s){if(g[s].length)h+='<div class="mut" style="margin-top:8px">'+s+"</div>"+g[s].sort(function(a,b){return b[1]-a[1]}).map(function(x){var c=cls(x[1]);return'<div class="mw"><span>'+x[0]+"</span>"+bar(x[1],c[1])+"<em>"+x[1]+"%</em></div>"}).join("")});
+  $("#mast").innerHTML=h||'<p class="mut">Log question results to see mastery by topic.</p>';
+}
+function wellness(d){
+  var W=[["w","Water"],["m","Movement"],["e","Eye break"],["l","Proper meal"],["s","Sleep quality"]];
+  $("#well").innerHTML=W.map(function(x){return'<button class="e1'+(d.w&&d.w[x[0]]?" on":"")+'" data-a="well" data-n="'+x[0]+'">'+x[1]+"</button>"}).join("");
+}
+function calendar(){
+  var d0=new Date();d0.setDate(d0.getDate()-((d0.getDay()+6)%7)-21);var k0=dk(d0),h="";
+  ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(function(x){h+="<h4>"+x+"</h4>"});
+  for(var i=0;i<28;i++){var k=addK(k0,i),f=k>TK(),has=!!DB.days[k]&&Object.keys(DB.days[k].done||{}).length>0,p=has?st(k).pct:0;
+    var bg=has?"background:color-mix(in srgb,var(--cy) "+Math.round(p*.55)+"%,color-mix(in srgb,var(--pri) "+(15+Math.round(p*.7))+"%,var(--card2)));"+(p>45?"color:#fff;":""):"";
+    h+='<button class="'+(k===TK()?"today":"")+'" style="'+bg+'" data-a="cal" data-k="'+k+'"'+(f?" disabled":"")+">"+pk(k).getDate()+"</button>"}
+  $("#cal").innerHTML=h;
+  var sum=[0,0,0,0,0,0,0],cnt=[0,0,0,0,0,0,0];
+  Object.keys(DB.days).forEach(function(k){if(Object.keys(DB.days[k].done||{}).length){var w=(pk(k).getDay()+6)%7;sum[w]+=st(k).pct;cnt[w]++}});
+  var best=-1,worst=-1,bv=-1,wv=101,N=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+  for(var w=0;w<7;w++)if(cnt[w]){var a=sum[w]/cnt[w];if(a>bv){bv=a;best=w}if(a<wv){wv=a;worst=w}}
+  $("#hmnote").textContent=best<0?"Brighter squares mean stronger days. Your strongest and weakest weekdays appear after a few days of data.":"Strongest: "+N[best]+" ("+Math.round(bv)+"% avg)"+(worst!==best?". Needs attention: "+N[worst]+" ("+Math.round(wv)+"% avg).":".");
+}
+function mistakes(){
+  var m=DB.mist,cnt={};m.forEach(function(x){var t=x.topic.toLowerCase();cnt[t]=(cnt[t]||0)+1});
+  var rep=Object.keys(cnt).filter(function(t){return cnt[t]>=2}).sort(function(a,b){return cnt[b]-cnt[a]});
+  $("#mlist").innerHTML=(rep.length?'<div class="mut">Top repeated mistakes</div>'+rep.slice(0,3).map(function(t){return'<div class="rv o"><span>'+t+"</span><b>"+cnt[t]+"×</b></div>"}).join(""):'<p class="mut">Repeated topics appear here. Goal: don\'t make the same mistake twice.</p>')+
+    m.slice(-4).reverse().map(function(x){return'<div class="rv"><span><b>'+esc(x.topic)+'</b> <span class="mut">'+esc(x.sub)+"</span><br>"+(x.mine?"Mistake: "+esc(x.mine)+"<br>":"")+(x.fix?"Method: "+esc(x.fix)+"<br>":"")+(x.mem?"Remember: "+esc(x.mem):"")+"</span></div>"}).join("");
+}
+function esc(s){return String(s||"").replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function review(d,s0){
+  var t=TK(),due=Object.keys(DB.topics).filter(function(n){return DB.topics[n].due<=t}).sort(function(a,b){return tacc(DB.topics[a])-tacc(DB.topics[b])})[0];
+  $("#rsum").innerHTML="Today: Study "+s0.pct+"% · Focus "+(s0.fs===null?"—":s0.fs+"%")+" · Wellness "+s0.well+"%<br>Tomorrow's priority: "+(due?due+" revision":"start with the first Maths session");
+}
+function loadForms(){
+  var d=DB.days[curKey]||{rv:{}};$("#a1").value=(d.rv||{}).a||"";$("#a2").value=(d.rv||{}).b||"";$("#a3").value=(d.rv||{}).c||"";
+  $("#s1").value=DB.set.name;$("#s2").value=DB.set.target;$("#s3").checked=DB.set.msgs;
+  $("#tl2").innerHTML=[].concat(T[new Date().getDay()].m,T[new Date().getDay()].r,T[new Date().getDay()].g).map(function(x){return'<option value="'+x+'">'}).join("");
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-a]");if(!b)return;var a=b.getAttribute("data-a"),i=+b.getAttribute("data-i"),d;
+  if(a==="task"){d=day();var s=S[i],n=nowMin();if(d.done[i]){delete d.done[i];delete d.ot[i]}else{d.done[i]=1;if(n>=s.s&&n<=s.e+15)d.ot[i]=1;lastPop=i}save();render();if(d.done[i]){toast(s.n+" done · +10 XP");bump()}}
+  else if(a==="focus")fmOpen(i);
+  else if(a==="en"||a==="mi"){d=day();d[a]=d[a]===i?null:i;save();render()}
+  else if(a==="well"){d=day();var n2=b.getAttribute("data-n");d.w[n2]=!d.w[n2];save();render()}
+  else if(a==="theme"){DB.set.theme=DB.set.theme==="dark"?"light":"dark";save();render()}
+  else if(a==="quote"){DB.qi++;save();render()}
+  else if(a==="dist"){d=day();d.dist=(d.dist||0)+1;save();render();toast("Noted. Breathe, then return to the task.")}
+  else if(a==="tab"){setTab(b.getAttribute("data-n"))}
+  else if(a==="rev"){var t=DB.topics[b.getAttribute("data-n")];if(t){t.stage=Math.min(4,t.stage+1);t.due=addK(TK(),IV[t.stage]);DB.rev++;save();render();toast("Revision recorded. Next review in "+IV[t.stage]+" days.")}}
+  else if(a==="cal"){var k=b.getAttribute("data-k"),s2=st(k);$("#caldet").textContent=pk(k).getDate()+" "+MON[pk(k).getMonth()]+": Study "+s2.pct+"% · Focus "+(s2.fs===null?"—":s2.fs+"%")+" · Wellness "+s2.well+"% · Score "+s2.score+" · Focused "+fmtMin(s2.min)}
+});
+$("#tf").addEventListener("submit",function(e){e.preventDefault();
+  var n=$("#t2").value.trim(),att=+$("#t3").value,cor=Math.min(+$("#t4").value,att);if(!n||!att)return;
+  var t=DB.topics[n],ex=!!t;t=t||(DB.topics[n]={sub:$("#t1").value,att:0,cor:0,stage:0,due:TK()});
+  var acc=100*cor/att;t.att+=att;t.cor+=cor;t.stage=(ex&&acc>=70)?Math.min(4,t.stage+1):0;t.due=addK(TK(),IV[t.stage]);
+  var d=day();d.q+=att;d.c+=cor;save();e.target.reset();render();toast(n+": "+Math.round(acc)+"% · "+cls(acc)[0])});
+$("#mf").addEventListener("submit",function(e){e.preventDefault();
+  DB.mist.push({k:TK(),sub:$("#m1").value,topic:$("#m2").value.trim(),q:$("#m3").value,mine:$("#m4").value,fix:$("#m5").value,mem:$("#m6").value});save();e.target.reset();render();toast("Mistake saved")});
+$("#rf").addEventListener("input",function(){var d=day();d.rv={a:$("#a1").value,b:$("#a2").value,c:$("#a3").value};save()});
+$("#s1").addEventListener("input",function(e){DB.set.name=e.target.value||"Sohel";save();render()});
+$("#s2").addEventListener("input",function(e){DB.set.target=Math.max(1,Math.min(17,+e.target.value||10));save();render()});
+$("#s3").addEventListener("change",function(e){DB.set.msgs=e.target.checked;save();render()});
+$("#exp").addEventListener("click",function(){var u=URL.createObjectURL(new Blob([JSON.stringify(DB,null,1)],{type:"application/json"})),a=document.createElement("a");a.href=u;a.download="study-backup-"+TK()+".json";a.click();setTimeout(function(){URL.revokeObjectURL(u)},500)});
+$("#imp").addEventListener("click",function(){$("#fi").click()});
+$("#fi").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){
+  try{var o=JSON.parse(r.result);if(!o.days)throw 0;if(confirm("Replace current data with this backup?")){DB=o;DB.set=Object.assign({name:"Sohel",theme:"dark",target:10,msgs:true},DB.set);DB.topics=DB.topics||{};DB.mist=DB.mist||[];DB.rev=DB.rev||0;DB.qi=DB.qi||0;save();curKey=null;render();toast("Backup imported")}}catch(x){alert("That file is not a valid backup.")}};r.readAsText(f);e.target.value=""});
+$("#rst").addEventListener("click",function(){if(confirm("Reset today's progress? Other days are kept.")){delete DB.days[TK()];save();curKey=null;render()}});
+$("#clr").addEventListener("click",function(){if(confirm("Clear ALL data permanently? Export a backup first if unsure.")){DB={set:DB.set,days:{},topics:{},mist:[],rev:0,qi:0};save();curKey=null;render()}});
+
+/* ---------- focus mode ---------- */
+var fm=null,tm=null;
+window.addEventListener("beforeunload",function(e){if(fm&&fm.run){e.preventDefault();e.returnValue=""}});
+function fmOpen(i){var s=S[i];fm={i:i,total:(s.e-s.s)*60,left:(s.e-s.s)*60,run:false,phase:"t",end:0};$("#fm").hidden=false;fmDraw()}
+function fmEl(){return fm.total-fm.left}
+function fmDraw(){
+  var s=S[fm.i],el=$("#fm"),m=Math.floor(fm.left/60),c=fm.left%60;
+  if(fm.phase==="fb"){el.innerHTML='<div class="in"><div class="k">FOCUS SESSION COMPLETE</div><h2>'+Math.round(fmEl()/60)+' minutes focused.</h2><p>How did it go?</p><div class="fbs">'+FBN.map(function(x,j){return'<button data-f="'+j+'">'+x+"</button>"}).join("")+"</div></div>";return}
+  el.innerHTML='<div class="in"><div class="orb"></div><div class="k">FOCUS MODE</div><h2>'+s.n+'</h2><p>'+s.d+'</p><div class="clk" id="fclk">'+pad(m)+":"+pad(c)+'</div><p>Stay with this one task.</p><div><button class="pri" data-f="go">'+(fm.run?"Pause":fm.left<fm.total?"Resume":"Start")+'</button><button data-f="done">Complete</button></div><button data-f="exit" style="font-size:13px;opacity:.7">Leave focus mode</button></div>';
+}
+function fmTick(){fm.left=Math.max(0,Math.ceil((fm.end-Date.now())/1000));if(fm.left<=0){fm.run=false;clearInterval(tm);fm.phase="fb";fmDraw()}else{var c=$("#fclk");if(c)c.textContent=pad(Math.floor(fm.left/60))+":"+pad(fm.left%60)}}
+$("#fm").addEventListener("click",function(e){
+  var b=e.target.closest("[data-f]");if(!b||!fm)return;var f=b.getAttribute("data-f");
+  if(f==="go"){if(fm.run){fm.run=false;clearInterval(tm)}else{fm.run=true;fm.end=Date.now()+fm.left*1000;tm=setInterval(fmTick,250)}fmDraw()}
+  else if(f==="done"){if(fmEl()<5){toast("Run the timer first, or tick the task in the timetable.");return}fm.run=false;clearInterval(tm);fm.phase="fb";fmDraw()}
+  else if(f==="exit"){if(fmEl()>30&&!confirm("Leave focus mode? This session will not be saved."))return;fm.run=false;clearInterval(tm);$("#fm").hidden=true;fm=null}
+  else{var d=day(),i=fm.i,s=S[i],n=nowMin();d.fl[i]={sec:fmEl(),fb:+f};d.done[i]=1;if(n>=s.s&&n<=s.e+15)d.ot[i]=1;save();$("#fm").hidden=true;fm=null;lastPop=i;render();toast("Session saved. +25 XP")}
+});
+
+render();
+var lm=-1;setInterval(function(){var n=nowMin();if(n!==lm){lm=n;if($("#fm").hidden)render()}tickCd()},1000);
+})();
+</script>
+</body>
+</html>
